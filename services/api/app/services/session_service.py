@@ -62,13 +62,21 @@ def session_out(session: SessionModel, task: Task) -> SessionOut:
     )
 
 
-def create_session(db: Session, user: User, task_id: str, duration: int) -> SessionModel:
+def create_session(db: Session, user: User, task_id: str, duration: int,
+                   lock_minutes: int | None = None) -> SessionModel:
     if duration not in settings.duration_options:
         raise err(422, "VALIDATION", f"duration must be one of {settings.duration_options}")
 
     lock = active_lock(db, user.id)
     if lock is not None:  # lock invariant: server refuses new sessions while locked (04 §2)
         raise err(409, "LOCKED", "Warm-up locked.", {"lock_until": iso_z(lock.lock_until)})
+
+    if lock_minutes is not None:
+        if user.profile is None:
+            user.profile = UserProfile(user_id=user.id)
+            db.add(user.profile)
+        user.profile.lock_minutes = max(60, lock_minutes)
+        db.flush()
 
     active = db.scalar(select(SessionModel).where(
         SessionModel.user_id == user.id, SessionModel.status == SESSION_ACTIVE))

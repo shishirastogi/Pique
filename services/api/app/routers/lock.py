@@ -16,8 +16,10 @@ def status(db: Session = Depends(get_db), user: User = Depends(get_current_user)
     if lock is None:
         return LockStatusOut(locked=False)
     remaining = int((lock.lock_until - now_utc()).total_seconds())
+    mins = user.profile.lock_minutes if user.profile else 120
     return LockStatusOut(locked=True, lock_until=iso_z(lock.lock_until),
-                         remaining_seconds=max(remaining, 0), session_id=lock.session_id)
+                         remaining_seconds=max(remaining, 0), session_id=lock.session_id,
+                         minutes=mins)
 
 
 @router.post("/emergency-unlock", response_model=LockStatusOut)

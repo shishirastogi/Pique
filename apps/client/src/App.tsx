@@ -1,47 +1,37 @@
 import { useEffect } from "react";
-import { api, ApiError, getToken } from "./lib/api";
-import { deviceFp } from "./lib/device";
-import { useApp } from "./stores/app";
-import Home from "./screens/Home";
-import Generating from "./screens/Generating";
-import Player from "./screens/Player";
-import Complete from "./screens/Complete";
-import Locked from "./screens/Locked";
-import { ClarifyModal, EmergencyUnlockModal, EndEarlyModal, ReportModal } from "./components/Modals";
+import { ThemeProvider } from "./lib/theme";
+import { AppFrame } from "./components/ui";
+import ScreenNavigator from "./components/ScreenNavigator";
+import { ClarifySheet, EmergencySheet, EndEarlySheet, ReportSheet } from "./components/Sheets";
+import { useApp } from "./store";
 
 export default function App() {
-  const { ready, screen, toast, modal, init } = useApp();
+  const { ready, screen, toast, boot, setScreen } = useApp();
 
-  useEffect(() => {
-    (async () => {
-      try {
-        if (!getToken()) await api.auth(deviceFp());
-        await init();
-      } catch (e) {
-        useApp.setState({
-          ready: true,
-          error: e instanceof ApiError ? e.message : "Startup failed",
-        });
-      }
-    })();
-  }, [init]);
+  useEffect(() => { void boot(); }, [boot]);
 
-  if (!ready) return <div className="boot">…</div>;
+  const sceneTone = screen === "welcome" || screen === "how" || screen === "locked" ? "scene" : "light";
 
   return (
-    <div className="phone">
-      {screen === "home" && <Home />}
-      {screen === "generating" && <Generating />}
-      {screen === "player" && <Player />}
-      {screen === "complete" && <Complete />}
-      {screen === "locked" && <Locked />}
+    <ThemeProvider>
+      <AppFrame tone={sceneTone}>
+        {!ready ? (
+          <div className="grid h-full place-items-center bg-[#04120b] text-[#27ffa1]">…</div>
+        ) : (
+          <ScreenNavigator screen={screen} onSetScreen={setScreen} />
+        )}
 
-      {modal === "clarify" && <ClarifyModal />}
-      <ReportModal />
-      {modal === "endEarly" && <EndEarlyModal />}
-      {modal === "emergencyUnlock" && <EmergencyUnlockModal />}
+        <ClarifySheet />
+        <ReportSheet />
+        <EndEarlySheet />
+        <EmergencySheet />
 
-      {toast && <div className="toast">{toast}</div>}
-    </div>
+        {toast && (
+          <div className="absolute bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full bg-[#0b2719] px-4 py-2 text-[13px] font-medium text-[#adfff4] shadow-lg ring-1 ring-[#27ffa1]/30">
+            {toast}
+          </div>
+        )}
+      </AppFrame>
+    </ThemeProvider>
   );
 }

@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 430 764" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <radialGradient id="glow" cx="0.5" cy="0.28" r="0.75">
+      <stop offset="0" stop-color="#27ffa1" stop-opacity="0.5"/>
+      <stop offset="0.45" stop-color="#0a5a37" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#04120b" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="leafA" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0f6b45"/>
+      <stop offset="1" stop-color="#04140d"/>
+    </linearGradient>
+    <linearGradient id="leafB" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#123a2a"/>
+      <stop offset="1" stop-color="#030d08"/>
+    </linearGradient>
+    <radialGradient id="orb" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#adfff4" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#27ffa1" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="430" height="764" fill="#04120b"/>
+  <rect width="430" height="764" fill="url(#glow)"/>
+
+  <!-- drifting light orbs -->
+  <circle cx="120" cy="140" r="90" fill="url(#orb)" opacity="0.5"/>
+  <circle cx="330" cy="90"  r="60" fill="url(#orb)" opacity="0.35"/>
+  <circle cx="380" cy="330" r="110" fill="url(#orb)" opacity="0.25"/>
+
+  <!-- fireflies -->
+  <g fill="#adfff4">
+    <circle cx="64" cy="120" r="1.6" opacity="0.9"/>
+    <circle cx="150" cy="68" r="1.1" opacity="0.6"/>
+    <circle cx="238" cy="150" r="1.3" opacity="0.8"/>
+    <circle cx="320" cy="205" r="1.2" opacity="0.7"/>
+    <circle cx="96" cy="300" r="1.4" opacity="0.8"/>
+    <circle cx="356" cy="430" r="1.7" opacity="0.85"/>
+    <circle cx="44" cy="430" r="1.1" opacity="0.6"/>
+    <circle cx="270" cy="360" r="1.0" opacity="0.55"/>
+    <circle cx="200" cy="520" r="1.5" opacity="0.7"/>
+    <circle cx="120" cy="600" r="1.2" opacity="0.5"/>
+  </g>
+
+  <!-- foliage silhouettes -->
+  <path d="M0 764 L0 470 Q60 380 150 430 Q110 520 210 560 Q120 640 60 620 Q120 700 40 764 Z" fill="url(#leafA)" opacity="0.9"/>
+  <path d="M430 764 L430 400 Q360 350 300 420 Q360 470 300 545 Q380 600 330 680 Q390 700 430 764 Z" fill="url(#leafB)" opacity="0.95"/>
+  <path d="M0 764 Q140 690 250 720 Q330 745 430 700 L430 764 Z" fill="#03120a"/>
+
+  <!-- foreground blades -->
+  <g stroke="#0e5b39" stroke-width="2" fill="none" opacity="0.55" stroke-linecap="round">
+    <path d="M30 764 Q44 700 24 660"/>
+    <path d="M70 764 Q92 705 80 650"/>
+    <path d="M370 764 Q356 705 378 655"/>
+    <path d="M405 764 Q395 712 412 668"/>
+  </g>
+</svg>

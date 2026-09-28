@@ -146,3 +146,30 @@ def test_events_and_auth_envelope(client, auth):
 
     client.post(f"/api/v1/sessions/{sid}/complete", headers=auth, json={})
     client.post("/api/v1/lock/emergency-unlock", headers=auth, json={"confirm": "I NEED TO STOP"})
+
+
+def test_custom_lock_timing_and_minimum_one_hour(client, auth):
+    task_id = _mk_task(client, auth)
+
+    # Less than 60 minutes is rejected by validation (minimum 1 hour)
+    bad = client.post("/api/v1/sessions", headers=auth,
+                      json={"task_id": task_id, "duration_minutes": 5, "lock_minutes": 30})
+    assert bad.status_code == 422
+
+    # Custom lock duration of 90 minutes (1.5 hours) is accepted
+    r = client.post("/api/v1/sessions", headers=auth,
+                    json={"task_id": task_id, "duration_minutes": 5, "lock_minutes": 90})
+    assert r.status_code == 201
+    sid = r.json()["session_id"]
+
+    comp = client.post(f"/api/v1/sessions/{sid}/complete", headers=auth, json={})
+    assert comp.status_code == 200
+    assert comp.json()["lock"]["minutes"] == 90
+
+    st = client.get("/api/v1/lock/status", headers=auth).json()
+    assert st["locked"] is True
+    assert st["minutes"] == 90
+    assert 5000 < st["remaining_seconds"] <= 5400  # 90 mins = 5400s
+
+    client.post("/api/v1/lock/emergency-unlock", headers=auth, json={"confirm": "I NEED TO STOP"})
+

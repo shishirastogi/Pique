@@ -135,6 +135,8 @@ Accessibility: full keyboard navigation, ARIA live region for countdown announce
 
 All cards share: type badge (small), body, optional attribution, optional `phase` tint. Each registered in `components/cards/`.
 
+**Global body rule (user decision 2026-09-26):** cards stay scannable — body text longer than ~240 chars renders clamped with a **Read more / Show less** toggle (sentence-boundary cut). Short cards are never touched. Player remounts via keyed card wrap, so expansion resets per card.
+
 | # | Type | Card contents | Interactive elements |
 |---|---|---|---|
 | 1 | `meme` | image (or rendered text-meme), caption | none |

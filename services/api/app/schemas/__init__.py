@@ -74,6 +74,7 @@ class TaskClarifyIn(BaseModel):
 class SessionCreateIn(BaseModel):
     task_id: str
     duration_minutes: Duration
+    lock_minutes: int | None = Field(default=None, ge=60, le=1440)
 
 
 class MediaRef(BaseModel):
@@ -155,6 +156,7 @@ class LockStatusOut(BaseModel):
     lock_until: str | None = None
     remaining_seconds: int = 0
     session_id: str | None = None
+    minutes: int | None = None
 
 
 class EmergencyUnlockIn(BaseModel):
@@ -171,7 +173,7 @@ class ProfilePatchIn(BaseModel):
     interests: list[str] | None = None
     study_areas: list[str] | None = None
     region: str | None = None
-    lock_minutes: int | None = Field(default=None, ge=15, le=480)
+    lock_minutes: int | None = Field(default=None, ge=60, le=1440)
     default_duration_minutes: Duration | None = None
     personalization_enabled: bool | None = None
     auto_advance: bool | None = None

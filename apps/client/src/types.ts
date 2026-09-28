@@ -1,5 +1,5 @@
-// Contracts mirroring services/api/app/schemas (codegen comes with
-// packages/shared-types in a later phase — keep manually in sync for the slice).
+// Contracts mirroring services/api/app/schemas (kept in sync manually for the slice;
+// packages/shared-types codegen arrives in a later phase).
 
 export type Duration = 5 | 10 | 15 | 20;
 
@@ -65,6 +65,7 @@ export interface LockStatus {
   lock_until: string | null;
   remaining_seconds: number;
   session_id: string | null;
+  minutes?: number;
 }
 
 export type SessionEventPayload = {

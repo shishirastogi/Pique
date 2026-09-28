@@ -1,0 +1,176 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Geist variable font (design manifest face) */
+@font-face {
+  font-family: "Geist";
+  src: url("https://static.figma.com/font/Geist_wght__1") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Geist:ExtraBold";
+  src: url("https://static.figma.com/font/Geist_wght__1") format("woff2");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Geist:Medium";
+  src: url("https://static.figma.com/font/Geist_wght__1") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme {
+  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+
+  /* Pique brand palette */
+  --color-pique-forest: #005f36;
+  --color-pique-forest-deep: #004226;
+  --color-pique-ink: #05130d;
+  --color-pique-ink-soft: #0b1f16;
+  --color-pique-mint: #27ffa1;
+  --color-pique-mint-bright: #5ffda1;
+  --color-pique-mint-soft: #86feca;
+  --color-pique-mint-pale: #adfff4;
+  --color-pique-mint-wash: #d3f7e5;
+}
+
+:root {
+  color-scheme: light;
+  --background: #f6faf7;
+  --surface: #ffffff;
+  --surface-2: #eef8f1;
+  --panel: #d6f6e6;
+  --foreground: #072016;
+  --muted-foreground: #4b6b5b;
+  --brand: #005f36;
+  --brand-strong: #004226;
+  --accent: #00a85f;
+  --accent-mint: #27ffa1;
+  --border: #d9e8df;
+  --border-strong: #b7d6c5;
+  --ring: #27ffa1;
+  --radius: 18px;
+}
+
+:root.dark {
+  color-scheme: dark;
+  --background: #04120b;
+  --surface: #081c12;
+  --surface-2: #0b2417;
+  --panel: #0e3222;
+  --foreground: #eafff4;
+  --muted-foreground: #8fbaa4;
+  --brand: #27ffa1;
+  --brand-strong: #5ffda1;
+  --accent: #27ffa1;
+  --accent-mint: #27ffa1;
+  --border: #17402c;
+  --border-strong: #1f5639;
+  --ring: #27ffa1;
+}
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--background);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+::selection { background: var(--accent-mint); color: #04120b; }
+
+@keyframes shimmer {
+  0% { transform: translateX(-60%); }
+  100% { transform: translateX(120%); }
+}
+
+* { scrollbar-width: none; }
+*::-webkit-scrollbar { width: 0; height: 0; }
+
+/* ------------------------------------------------------------------ */
+/* Motion system — screen push/pop, card swap, staggered content rise */
+/* ------------------------------------------------------------------ */
+
+:root {
+  --dur-nav: 440ms;
+  --ease-nav: cubic-bezier(0.32, 0.72, 0, 1);   /* iOS push easing */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);  /* soft decel */
+}
+
+/* Screen transitions: forward = push (new slides over old, old parallays left),
+   back = pop (old slides away right, dimmed old view is revealed). */
+@keyframes screen-in-fwd  { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes screen-out-fwd { from { transform: translateX(0); }    to { transform: translateX(-26%); } }
+@keyframes screen-in-back { from { transform: translateX(-26%); opacity: 0.55; } to { transform: translateX(0); opacity: 1; } }
+@keyframes screen-out-back { from { transform: translateX(0); }  to { transform: translateX(100%); } }
+
+.anim-screen-in-fwd  { animation: screen-in-fwd  var(--dur-nav) var(--ease-nav) both; }
+.anim-screen-out-fwd { animation: screen-out-fwd var(--dur-nav) var(--ease-nav) both; }
+.anim-screen-in-back { animation: screen-in-back var(--dur-nav) var(--ease-nav) both; }
+.anim-screen-out-back { animation: screen-out-back var(--dur-nav) var(--ease-nav) both; }
+.anim-screen-shadow  { box-shadow: -28px 0 55px -14px rgba(0, 12, 6, 0.55); }
+
+/* Card swap: outgoing content drifts left and fades, incoming slides in */
+@keyframes card-in  { from { transform: translateX(64px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes card-out { from { transform: translateX(0); opacity: 1; }    to { transform: translateX(-64px); opacity: 0; } }
+@keyframes card-in-next {
+  from { transform: translate3d(56px, 0, 0) scale(0.98); opacity: 0; }
+  to { transform: translate3d(0, 0, 0) scale(1); opacity: 1; }
+}
+@keyframes card-in-prev {
+  from { transform: translate3d(-56px, 0, 0) scale(0.98); opacity: 0; }
+  to { transform: translate3d(0, 0, 0) scale(1); opacity: 1; }
+}
+
+.anim-card-in  { animation: card-in  400ms var(--ease-out) both; }
+.anim-card-out { animation: card-out 260ms cubic-bezier(0.4, 0, 1, 1) both; }
+.anim-card-in-next { animation: card-in-next 380ms var(--ease-out) both; }
+.anim-card-in-prev { animation: card-in-prev 380ms var(--ease-out) both; }
+
+/* Staggered content reveal — plays under [data-anim="on"] or directly on elements */
+@keyframes rise { from { transform: translate3d(0, 16px, 0); opacity: 0; } to { transform: translate3d(0, 0, 0); opacity: 1; } }
+.anim-rise, [data-anim="on"] .anim-rise { animation: rise 400ms var(--ease-out) both; }
+.anim-d1, [data-anim="on"] .anim-d1 { animation-delay: 50ms; }
+.anim-d2, [data-anim="on"] .anim-d2 { animation-delay: 110ms; }
+.anim-d3, [data-anim="on"] .anim-d3 { animation-delay: 170ms; }
+.anim-d4, [data-anim="on"] .anim-d4 { animation-delay: 230ms; }
+
+/* Interactive button press & tactile feedback */
+.btn-pressable {
+  transition: transform 180ms cubic-bezier(0.2, 0.8, 0.4, 1), box-shadow 180ms ease, opacity 180ms ease, filter 180ms ease;
+  will-change: transform;
+}
+.btn-pressable:hover {
+  transform: translateY(-1px);
+}
+.btn-pressable:active {
+  transform: translateY(1.5px) scale(0.97);
+}
+
+/* Smooth auto-resizing card holder */
+.card-auto-height {
+  transition: height 360ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: height;
+}
+
+/* Toast pop */
+@keyframes toast-in { from { transform: translate(-50%, 12px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+.anim-toast { animation: toast-in 260ms var(--ease-out) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-screen-in-fwd, .anim-screen-out-fwd, .anim-screen-in-back, .anim-screen-out-back,
+  .anim-card-in, .anim-card-out, .anim-card-in-next, .anim-card-in-prev, .anim-toast,
+  .anim-rise, [data-anim="on"] .anim-rise { animation: none !important; }
+  .btn-pressable { transform: none !important; }
+  .card-auto-height { transition: none !important; }
+}

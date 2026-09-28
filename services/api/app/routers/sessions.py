@@ -15,7 +15,9 @@ router = APIRouter()
 @router.post("", response_model=SessionOut, status_code=201)
 def create(body: SessionCreateIn, db: Session = Depends(get_db),
            user: User = Depends(get_current_user)):
-    session = session_service.create_session(db, user, body.task_id, body.duration_minutes)
+    session = session_service.create_session(
+        db, user, body.task_id, body.duration_minutes, body.lock_minutes
+    )
     task = db.scalar(select(Task).where(Task.id == session.task_id))
     return session_service.session_out(session, task)
 
