@@ -9,14 +9,22 @@ import { useApp } from "../store";
 export default function Session() {
   const {
     session, items, cursor, nextCard, setSheet, setEngagement,
-    markShown, completeSession,
+    markShown, completeSession, pauseSession, resumeSession, progress,
   } = useApp();
   const card = items[cursor];
   const isLast = cursor === items.length - 1;
   const endsAt = session ? new Date(session.ends_at).getTime() : Date.now();
   const [left, setLeft] = useState(Math.max(0, endsAt - Date.now()));
+  const [isPaused, setIsPaused] = useState(false);
+  const leftRef = useRef(left);
+  leftRef.current = left;
+
   const [cardDirection, setCardDirection] = useState<"next" | "prev">("next");
   const prevCursorRef = useRef(cursor);
+
+  useEffect(() => {
+    setLeft(Math.max(0, endsAt - Date.now()));
+  }, [endsAt]);
 
   useEffect(() => {
     if (cursor > prevCursorRef.current) {
@@ -29,14 +37,52 @@ export default function Session() {
 
   useEffect(() => { if (card) markShown(cursor); }, [cursor, card, markShown]);
 
+  // Pause countdown when screen locks or app minimizes; resume seamlessly when user returns
   useEffect(() => {
+    const handleHide = () => {
+      setIsPaused(true);
+      const remSec = Math.max(1, Math.round(leftRef.current / 1000));
+      pauseSession(remSec);
+    };
+
+    const handleShow = () => {
+      setIsPaused(false);
+      void resumeSession();
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        handleHide();
+      } else if (document.visibilityState === "visible") {
+        handleShow();
+      }
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener("pagehide", handleHide);
+    window.addEventListener("pageshow", handleShow);
+    window.addEventListener("blur", handleHide);
+    window.addEventListener("focus", handleShow);
+
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("pagehide", handleHide);
+      window.removeEventListener("pageshow", handleShow);
+      window.removeEventListener("blur", handleHide);
+      window.removeEventListener("focus", handleShow);
+    };
+  }, [pauseSession, resumeSession]);
+
+  useEffect(() => {
+    if (isPaused) return;
+
     const t = window.setInterval(() => {
       const rem = Math.max(0, endsAt - Date.now());
       setLeft(rem);
       if (rem === 0) void completeSession(null);  // hard stop: countdown owns the session
     }, 1000);
     return () => clearInterval(t);
-  }, [endsAt, completeSession]);
+  }, [endsAt, isPaused, completeSession]);
 
   const total = Math.ceil(left / 1000);
   const mm = String(Math.floor(total / 60)).padStart(2, "0");
@@ -125,7 +171,11 @@ export default function Session() {
                 cardDirection === "next" ? "anim-card-in-next" : "anim-card-in-prev"
               }`}
             >
-              <CardView card={card} onEngage={(e) => setEngagement(cursor, e)} />
+              <CardView
+                card={card}
+                initialEngagement={progress[cursor]?.engagement}
+                onEngage={(e) => setEngagement(cursor, e)}
+              />
             </div>
           </AutoHeight>
         ) : (

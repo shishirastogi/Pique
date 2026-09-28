@@ -163,14 +163,26 @@ def plan(duration: int, task: TaskObject, interests: list[str], seed: str,
 def needed_generation_types(duration: int, task: TaskObject, interests: list[str],
                             seed: str, real_pool: list[dict] | None = None,
                             llm_picks: dict[int, str] | None = None) -> list[dict]:
-    """Dry-run of plan() returning only the slots that WILL need generation
-    (position + type), so the LLM batch can pre-generate their payloads in one
-    call (session-create latency, docs/02 §6). Must receive the same
-    `llm_picks` as the real plan() call or positions would shift."""
+    """Dry-run of plan() returning slots that need LLM generation (pure generation
+    plus image cards that need compelling LLM text)."""
     items = plan(duration, task, interests, seed, real_pool=real_pool,
                  pregen_payloads=None, llm_picks=llm_picks)
-    return [{"position": i["position"], "type": i["type"]}
-            for i in items if "payload" in i]
+    pool_by_id = {c["content_id"]: c for c in (real_pool or [])}
+    out: list[dict] = []
+    for i in items:
+        if "payload" in i:
+            out.append({"position": i["position"], "type": i["type"]})
+        elif "existing_content_id" in i:
+            cand = pool_by_id.get(i["existing_content_id"])
+            if cand and (cand.get("has_media") or (cand.get("media") or {}).get("url")):
+                img_ctx = str(cand.get("title") or cand.get("body") or task.topic)[:140]
+                out.append({
+                    "position": i["position"],
+                    "type": i["type"],
+                    "existing_content_id": i["existing_content_id"],
+                    "image_context": img_ctx,
+                })
+    return out
 
 
 def _allocate_dwell(items: list[dict], duration: int) -> None:

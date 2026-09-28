@@ -22,9 +22,13 @@ class GroqProvider:
         r = self._call(system, user, json_mode, timeout_s or self._timeout)
         if r.status_code == 429:
             delay = r.headers.get("Retry-After")
-            if delay and float(delay) <= 25:
+            try:
+                wait_s = float(delay) if delay else 2.0
+            except (ValueError, TypeError):
+                wait_s = 2.0
+            if wait_s <= 25:
                 import time
-                time.sleep(float(delay) + 0.5)
+                time.sleep(wait_s + 0.5)
                 r = self._call(system, user, json_mode, timeout_s or self._timeout)
         if r.status_code in (400, 404) and "model" in r.text.lower():
             new_model = self._discover_model()

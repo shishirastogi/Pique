@@ -118,6 +118,11 @@ class SessionItemsOut(BaseModel):
     items: list[ContentCard]
 
 
+class SessionResumeIn(BaseModel):
+    remaining_seconds: int = Field(ge=1, le=3600)
+    cursor: int | None = None
+
+
 class SessionEventIn(BaseModel):
     type: Literal["item_shown", "item_done", "heartbeat", "initiation_reported"]
     content_id: str | None = None

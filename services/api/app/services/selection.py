@@ -12,16 +12,14 @@ from app.schemas import TaskObject
 
 log = logging.getLogger("pique.selection")
 
-_SYSTEM = """You are the curator for a FocusWarmup session — a short warm-up that must make
-the user genuinely curious so they go start the real task. You choose WHICH existing
-content cards go into which slots.
+_SYSTEM = """You are the master curator for a FocusWarmup session — a short, high-impact warm-up that sparks intense curiosity and intellectual excitement before deep work. You choose WHICH existing content cards go into which slots.
 
 Rules:
-- Prefer cards that are clearly about the topic; kill anything off-topic even if well-made.
-- Visual cards (has_media) are valuable in visual slots; text-only is fine elsewhere.
-- Match the slot's allowed types exactly; fit the phase vibe (curiosity = questions/history,
-  understanding = explanations/diagrams).
-- Maximize "huh, interesting" per card; prefer beginner-friendly when level is beginner.
+- High bar for fascination and curiosity: Prefer cards that reveal something genuinely surprising, counterintuitive, or profound about the topic. Reject dry, obvious, or generic cards.
+- Visual cards (media=True) are prime candidates for visual slots (diagram, visual_explanation, interesting_fact). Prioritize authentic diagrams, schematics, high-clarity historical or scientific images over generic stock graphics.
+- If an image card is selected, our system will generate fresh, punchy, intriguing copy for it, so prioritize candidates with great visual subject matter.
+- Reject weak, dry, uninteresting, or low-relevance candidates by setting the slot to null so the LLM can generate a bespoke, high-curiosity card instead.
+- Match the slot's allowed types exactly; fit the phase vibe (curiosity = questions/history/surprising trivia, understanding = explanations/diagrams/mechanisms).
 - Return ONLY JSON: {"picks": {"<position>": "<candidate_id>" or null}}.
   null = "no good candidate; generate one instead"."""
 
@@ -36,10 +34,14 @@ def select_for_slots(slots: list[dict], candidates: list[dict],
     open_slots = [s for s in slots if not s.get("force_type")]
     if not open_slots or not candidates:
         return None
-    cand_lines = [
-        f'- {c["content_id"]} | type={c["type"]} | media={bool(c.get("has_media"))} | {str(c.get("title") or c.get("body", ""))[:70]}'
-        for c in candidates[:_MAX_CANDIDATES]
-    ]
+    cand_lines = []
+    for c in candidates[:_MAX_CANDIDATES]:
+        title = (c.get("title") or "").strip()
+        body = (c.get("body") or "").strip()
+        snippet = f"{title}: {body}" if title and body else (title or body or "image/visual")
+        snippet = snippet.replace("\n", " ")[:140]
+        cand_lines.append(f'- {c["content_id"]} | type={c["type"]} | media={bool(c.get("has_media"))} | {snippet}')
+
     slot_lines = [f'- pos {s["position"]}: phase={s["phase"]}, types={"|".join(s["allowed_types"])}'
                   for s in open_slots]
     user = f"""Topic: {task.topic} (subtopics: {', '.join(task.subtopics) or 'general'}, level: {task.level or 'beginner'})

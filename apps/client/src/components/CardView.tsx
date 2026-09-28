@@ -1,6 +1,6 @@
 // Card renderer in the Pique design language (docs/05 §6), driven by real
 // ContentCard payloads. Long bodies clamp with Read more (user rule).
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ContentCard } from "../types";
 import { Chip } from "./ui";
 
@@ -24,12 +24,26 @@ const TYPE_LABEL: Record<string, string> = {
 };
 
 export default function CardView({
-  card, onEngage,
-}: { card: ContentCard; onEngage: (e: Record<string, unknown>) => void }) {
-  const [revealed, setRevealed] = useState(false);
-  const [voted, setVoted] = useState<number | null>(null);
-  const [choice, setChoice] = useState<boolean | null>(null);
+  card, onEngage, initialEngagement,
+}: {
+  card: ContentCard;
+  onEngage: (e: Record<string, unknown>) => void;
+  initialEngagement?: Record<string, unknown>;
+}) {
+  const [revealed, setRevealed] = useState(() => Boolean(initialEngagement?.reveal || initialEngagement?.answer));
+  const [hintShown, setHintShown] = useState(() => Boolean(initialEngagement?.hint));
+  const [voted, setVoted] = useState<number | null>(() => typeof initialEngagement?.poll_choice === "number" ? (initialEngagement.poll_choice as number) : null);
+  const [choice, setChoice] = useState<boolean | null>(() => initialEngagement?.challenge ? (initialEngagement.challenge === "accepted") : null);
   const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    setRevealed(Boolean(initialEngagement?.reveal || initialEngagement?.answer));
+    setHintShown(Boolean(initialEngagement?.hint));
+    setVoted(typeof initialEngagement?.poll_choice === "number" ? (initialEngagement.poll_choice as number) : null);
+    setChoice(initialEngagement?.challenge ? (initialEngagement.challenge === "accepted") : null);
+    setExpanded(false);
+  }, [card.content_id, initialEngagement]);
+
   const it = card.interaction;
   const isLong = card.body.length > LONG_BODY;
   const img = card.media?.url;
@@ -41,16 +55,17 @@ export default function CardView({
     >
       {/* visual panel */}
       <div
-        className={`relative w-full overflow-hidden rounded-[22px] border border-[color:var(--border)] bg-[color:var(--panel)] anim-rise anim-d1 shrink-0 ${
-          img ? "aspect-[16/10] max-h-[210px]" : "h-[104px] flex flex-col items-center justify-center p-3"
+        className={`relative w-full overflow-hidden rounded-[22px] border border-[color:var(--border)] bg-[color:var(--panel)] anim-rise anim-d1 flex flex-col items-center justify-center transition-all duration-300 ${
+          img ? "min-h-[120px]" : "h-[104px] p-3"
         }`}
       >
         {img ? (
           <img
             src={img}
             alt={card.title ?? card.type}
-            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out hover:scale-105"
+            className="w-full h-auto max-h-[500px] object-contain block transition-transform duration-500 ease-out hover:scale-[1.01]"
             referrerPolicy="no-referrer"
+            loading="eager"
           />
         ) : (
           <div className="flex flex-col items-center gap-1 text-center">
@@ -75,13 +90,13 @@ export default function CardView({
             </span>
           </div>
         )}
-        <span className="absolute left-3.5 top-3.5 rounded-full bg-black/50 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white backdrop-blur-md">
+        <span className="absolute left-3.5 top-3.5 rounded-full bg-black/60 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white backdrop-blur-md shadow-sm z-10">
           {TYPE_LABEL[card.type] ?? card.type}
         </span>
         {card.attribution?.required && card.attribution.text && (
-          <span className="absolute inset-x-0 bottom-0 bg-black/60 px-3 py-1.5 text-[9.5px] leading-tight text-white/90 backdrop-blur-sm">
+          <div className="w-full bg-black/70 px-3 py-1.5 text-[9.5px] leading-tight text-white/90 backdrop-blur-sm z-10">
             {card.attribution.text}
-          </span>
+          </div>
         )}
       </div>
 
@@ -109,26 +124,62 @@ export default function CardView({
       {it?.kind === "reveal" && (
         <div className="anim-rise anim-d4 mt-3">
           {revealed ? (
-            <p className="rounded-2xl bg-[color:var(--surface-2)] px-4 py-3 text-[13.5px] font-medium text-[color:var(--brand)]">
+            <div className="rounded-2xl bg-[color:var(--surface-2)] px-4 py-3 text-[13.5px] font-medium text-[color:var(--brand)]">
+              <span className="font-bold text-[color:var(--accent)]">Reveal: </span>
               {it.reveal}
-            </p>
+            </div>
           ) : (
-            <Chip className="btn-pressable" onClick={() => { setRevealed(true); onEngage({ reveal: true }); }}>Reveal</Chip>
+            <Chip
+              className="btn-pressable"
+              active
+              onClick={() => {
+                setRevealed(true);
+                onEngage({ reveal: true });
+              }}
+            >
+              Reveal
+            </Chip>
           )}
         </div>
       )}
 
       {it?.kind === "question" && (
-        <div className="anim-rise anim-d4 mt-3 flex flex-wrap gap-2">
-          {it.hint && !revealed && (
-            <Chip className="btn-pressable" onClick={() => onEngage({ hint: true })}>Show hint</Chip>
+        <div className="anim-rise anim-d4 mt-3 flex flex-col gap-2">
+          {hintShown && it.hint && (
+            <div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-2)] px-4 py-2.5 text-[13px] text-[color:var(--muted-foreground)]">
+              <span className="font-semibold text-[color:var(--accent)]">Hint: </span>
+              {it.hint}
+            </div>
           )}
-          {!revealed ? (
-            <Chip className="btn-pressable" onClick={() => setRevealed(true)}>Show answer</Chip>
+          {revealed ? (
+            <div className="rounded-2xl bg-[color:var(--surface-2)] px-4 py-3 text-[13.5px] font-medium text-[color:var(--brand)]">
+              <span className="font-bold text-[color:var(--foreground)]">Answer: </span>
+              {it.answer || it.hint}
+            </div>
           ) : (
-            <p className="w-full rounded-2xl bg-[color:var(--surface-2)] px-4 py-3 text-[13.5px] font-medium text-[color:var(--brand)]">
-              {it.hint}{it.answer ? ` ${it.answer}` : ""}
-            </p>
+            <div className="flex flex-wrap gap-2">
+              {it.hint && !hintShown && (
+                <Chip
+                  className="btn-pressable"
+                  onClick={() => {
+                    setHintShown(true);
+                    onEngage({ hint: true });
+                  }}
+                >
+                  Show hint
+                </Chip>
+              )}
+              <Chip
+                className="btn-pressable"
+                active
+                onClick={() => {
+                  setRevealed(true);
+                  onEngage({ reveal: true });
+                }}
+              >
+                Show answer
+              </Chip>
+            </div>
           )}
         </div>
       )}

@@ -4,9 +4,9 @@ from sqlalchemy.orm import Session
 
 from app.core.errors import err
 from app.core.security import get_current_user
-from app.db import get_db, ContentSource, Task, User
+from app.db import get_db, ContentSource, Task, User, SESSION_ACTIVE
 from app.schemas import (SessionCompleteIn, SessionEventsIn, SessionItemsOut, SessionOut,
-                         SessionCreateIn)
+                         SessionCreateIn, SessionResumeIn)
 from app.services import session_service
 
 router = APIRouter()
@@ -22,10 +22,30 @@ def create(body: SessionCreateIn, db: Session = Depends(get_db),
     return session_service.session_out(session, task)
 
 
+@router.get("/active", response_model=SessionOut | None)
+def get_active(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    session = session_service.get_active_session(db, user)
+    if session is None:
+        return None
+    task = db.scalar(select(Task).where(Task.id == session.task_id))
+    return session_service.session_out(session, task)
+
+
 @router.get("/{session_id}", response_model=SessionOut)
 def get_session(session_id: str, db: Session = Depends(get_db),
                 user: User = Depends(get_current_user)):
     session = session_service.get_owned_session(db, user, session_id)
+    task = db.scalar(select(Task).where(Task.id == session.task_id))
+    return session_service.session_out(session, task)
+
+
+@router.post("/{session_id}/resume", response_model=SessionOut)
+def resume(session_id: str, body: SessionResumeIn, db: Session = Depends(get_db),
+           user: User = Depends(get_current_user)):
+    session = session_service.get_owned_session(db, user, session_id)
+    if session.status != SESSION_ACTIVE:
+        raise err(409, "CONFLICT", "Session is no longer active")
+    session = session_service.resume_session(db, session, body.remaining_seconds, body.cursor)
     task = db.scalar(select(Task).where(Task.id == session.task_id))
     return session_service.session_out(session, task)
 

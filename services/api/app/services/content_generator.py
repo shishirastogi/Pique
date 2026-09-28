@@ -47,119 +47,125 @@ def generate_item(ctype: str, task: TaskObject, interests: list[str], rng: rando
                  body=f"10 minutes on {facet}, then we ship it."),
         ],
         "interesting_fact": [
-            dict(title=f"The part of {t} nobody warns you about",
-                 body=f"Most people grind through {t} and miss that {s} is the piece that makes "
-                      f"everything else make sense. Hold that thought for this session."),
-            dict(title=f"Quiet truth about {t}",
-                 body=f"Experts rarely say it aloud: understanding {facet} is 80% of passing "
-                      f"the rest."),
-            dict(title=f"Surprising angle",
-                 body=f"Once you see {facet}, you can't unsee it in the material. That's the hook — use it."),
+            dict(title=f"The counter-intuitive secret of {s}",
+                 body=f"In {t}, behavior often defies ordinary intuition. {s} was once considered impossible "
+                      f"until researchers discovered that the underlying mechanism inverts the standard rule."),
+            dict(title=f"Why {s} breaks common sense",
+                 body=f"If you look closely at {t}, {s} exists because nature (and engineering) had to solve a "
+                      f"fundamental trade-off. Once you see that trade-off, the rest of the subject clicks into place."),
+            dict(title=f"The hidden engine in {t}",
+                 body=f"Most people think {s} is merely a technical detail. In reality, it is the primary engine "
+                      f"driving {t}—without it, the entire system falls apart."),
         ],
         "trivia": [
-            dict(title="Did you know?",
-                 body=f"Every expert in {t} once stared at {s} with total confusion. "
-                      f"Confusion is the entry ticket, not the exit sign."),
-            dict(title="Bet you didn't know",
-                 body=f"“{facet}” trips up almost everyone the first time — which means mastering "
-                      f"it puts you ahead."),
+            dict(title=f"The accidental origin of {s}",
+                 body=f"Did you know {s} wasn't discovered on purpose? Early pioneers exploring {t} stumbled upon "
+                      f"it while trying to prove something completely different."),
+            dict(title=f"The strange history of {t}",
+                 body=f"When {s} was first proposed to explain {t}, leading experts vehemently rejected the idea "
+                      f"as mathematically or physically absurd."),
         ],
         "quote": [
             dict(title=None,
-                 body=f"“You don't have to like {t}. You just have to start it.” — FocusWarmup"),
+                 body=f"“The most exciting phrase in science, the one that heralds new discoveries, is not 'Eureka!' but 'That's funny...'” — Isaac Asimov"),
             dict(title=None,
-                 body=f"“{s} is hard? Good. Easy wouldn't hold your attention anyway.” — FocusWarmup"),
+                 body=f"“What we observe is not nature itself, but nature exposed to our method of questioning.” — Werner Heisenberg"),
         ],
         "quote_removed": [],  # placeholder keeps indices stable
         "joke": [
-            dict(title=None, body=f"Why did the {t} student bring a ladder?")
+            dict(title=f"The {s} Paradox", body=f"Why do experts in {t} always look so closely at {s}?")
         ],
         "question": [
-            dict(title="Honest question",
-                 body=f"If you had to explain {s} in one sentence right now, what would it be?"),
-            dict(title="Poke the gap",
-                 body=f"What's the one thing about {facet} you could *not* explain to a friend? Start there."),
+            dict(title=f"Thought Experiment: {s}",
+                 body=f"If you could freeze {s} in mid-operation inside {t}, what would happen to the surrounding equilibrium?"),
+            dict(title=f"Conceptual Puzzle: {facet}",
+                 body=f"Imagine removing {s} entirely from {t}. What is the very first mechanism that breaks down?"),
         ],
         "poll": [
-            dict(title="Quick pulse", body="Which one sounds harder right now?"),
-            dict(title="Hot seat", body="Be honest — where's your weak spot?"),
+            dict(title=f"The Great {t} Debate", body=f"Which fundamental aspect of {t} is the most counter-intuitive?"),
+            dict(title=f"Dilemma in {s}", body=f"When building or analyzing {t}, where do real-world systems fail first?"),
         ],
         "analogy": [
-            dict(title=f"{t}, but make it {interest or 'your world'}",
-                 body=(f"Think about {interest or 'anything you love'}: you never master it in one "
-                       f"sitting — you learn the patterns, fail a little, level up. {t} works the "
-                       f"same way. {s} is just the next pattern to learn.")),
-            dict(title=f"The {interest or 'life'} of it",
-                 body=(f"{facet.capitalize()} is less about memorizing and more like "
-                       f"{interest or 'your favorite skill'}: recognize the pattern, then act. "
-                       "Pattern first, details later.")),
+            dict(title=f"{t} through the lens of {interest or 'everyday mechanics'}",
+                 body=(f"Think of {interest or 'a complex engine'}: {s} acts like the central gearbox. "
+                       f"It translates unpredictable, raw potential into finely tuned, directional momentum in {t}.")),
+            dict(title=f"How {facet} mirrors {interest or 'nature'}",
+                 body=(f"Much like {interest or 'an ecosystem in balance'}, {s} in {t} isn't a static formula—"
+                       "it is dynamic equilibrium where two opposing forces constantly negotiate stability.")),
         ],
         "historical_context": [
-            dict(title=f"Where {t} came from",
-                 body=f"Someone, someday, was stuck on the exact piece that annoys you now: {s}. "
-                      f"The whole field exists because people kept poking that stubborn question."),
-            dict(title="Turns out this is old news",
-                 body=f"Debates over {facet} are older than the textbook you're avoiding. "
-                      f"You're joining a long line of stubborn curiosity."),
+            dict(title=f"The breakthrough that unlocked {t}",
+                 body=f"Before {s} was formulated, {t} was considered a chaotic collection of disconnected observations. "
+                      f"One pivotal paper connected the dots and established modern principles."),
+            dict(title=f"The rivalry behind {facet}",
+                 body=f"The principles governing {s} were born out of a fierce intellectual debate between competing "
+                      f"schools of thought, ultimately resolved by a single definitive experiment."),
         ],
         "mini_story": [
-            dict(title="A 30-second story",
-                 body=f"A student kept rereading the same {t} chapter, stuck. Then they rewrote {s} "
-                      f"in their own words, badly, on purpose. The bad draft became the good answer."),
-            dict(title="The 11pm turnaround",
-                 body=f"Exam tomorrow. They picked ONE idea — {s} — and explained it to the mirror. "
-                      f"The rest of the chapter suddenly made sense. One idea is the crack in the wall."),
+            dict(title="The 3 AM Eureka",
+                 body=f"A researcher spent three grueling years trying to make {t} conform to legacy theories. "
+                      f"The solution only appeared when they inverted the core assumption about {s}."),
+            dict(title="The anomaly that changed everything",
+                 body=f"In the early days of studying {t}, an unexplained margin of error in {s} was dismissed as noise. "
+                      f"That 'noise' turned out to be the foundational law of the entire phenomenon."),
         ],
         "visual_explanation": [
-            dict(title=f"{s}, sketched in words",
-                 body=f"Picture {t} as three layers:\n• What it is: {s}\n"
-                      f"• Why it matters: it's the hinge the rest swings on\n"
-                      f"• First thing to check: your own notes' definition of {s}"),
-            dict(title=f"See {facet} clearly",
-                 body=f"If you sketched it from memory: what's on the left, what's on the right, "
-                      f"and what connects them? That sketch is 70% of the test."),
+            dict(title=f"{s}, visualized",
+                 body=f"Imagine {t} as a dynamic balance:\n• Equilibrium: state before disturbance\n"
+                      f"• Catalyst: {s} controls the rate and threshold of change\n"
+                      f"• Emergence: coherent output without runaway instability."),
+            dict(title=f"The geometry of {facet}",
+                 body=f"If you trace how {s} operates in real time, the energy (or information) follows the path "
+                      f"of least resistance, creating a self-reinforcing pattern."),
         ],
         "diagram": [
-            dict(title=f"{t} — mental map",
-                 body=f"[mock diagram] {s} → leads to → {facet} → unlocks → the rest of {t}.")
+            dict(title=f"{t} — System Architecture",
+                 body=f"[System Map] Initial State → Catalyst [{s}] → Transformation [{facet}] → Stable Output.")
         ],
         "micro_lesson": [
-            dict(title=f"{s} in three lines",
-                 body=f"1) {s} is the core of {t}.\n"
-                      f"2) Most mistakes come from skipping the definition.\n"
-                      f"3) Today's win: one clean sentence about {s}."),
-            dict(title=f"Mini-lesson: {facet}",
-                 body=f"Rule of thumb: if you can't say what it IS and what it ISN'T, "
-                      f"you don't own {s} yet. 60 seconds: write both."),
+            dict(title=f"Mental Model: {s}",
+                 body=f"1) Core principle: {s} balances internal tension in {t}.\n"
+                      f"2) The common trap: mistaking the symptom for the root mechanism.\n"
+                      f"3) Key takeaway: follow how state transitions happen under stress."),
+            dict(title=f"The 60-Second Intuition: {facet}",
+                 body=f"Whenever you encounter {s} in {t}, ask: 'What is being conserved, and what is being transformed?' "
+                      f"Answer that, and the complexity evaporates."),
         ],
         "challenge": [
-            dict(title="2-minute challenge",
-                 body=f"Write down everything you already know about {s} — no notes, no checking. "
-                      f"Ugly lists count."),
-            dict(title="Prove it fast",
-                 body=f"In 90 seconds: explain {facet} out loud. Fumble = exactly what to revise first."),
+            dict(title="60-Second Mental Challenge",
+                 body=f"Can you explain the core mechanism of {s} in two sentences without using buzzwords or jargon?"),
+            dict(title="Spot the Paradox",
+                 body=f"Find the one scenario in {facet} where increasing the input actually decreases the output rate."),
         ],
         "first_work_action": [
-            dict(title="You're ready. First step:", body=_first_step(task))
+            dict(title="You're primed. First step:", body=_first_step(task))
         ],
     }
     pool = variants.get(ctype) or [dict(title=None, body=t)]
     payload = dict(pool[variant % len(pool)])  # rotate by variant
     # polls need interaction options built from subtopics; per-variant shuffle
     if ctype == "poll":
-        opts = [s] + ([sub for sub in task.subtopics if sub != s][:1])
-        opts += ["Just starting at all", f"Everything about {t}"]
+        opts = [
+            f"How {s} operates under extreme conditions",
+            f"The counter-intuitive math/logic of {t}",
+            f"Real-world edge cases where {s} breaks down",
+            f"The hidden trade-offs inside {facet}"
+        ]
         payload["interaction"] = {"kind": "poll", "question": payload["title"],
-                                  "options": opts[:4] if len(opts) >= 2 else
-                                             ["Too easy", "Just right", "Too hard", "Send help"]}
+                                  "options": opts}
     if ctype == "question":
-        payload["interaction"] = {"kind": "question",
-                                  "hint": f"Start with: \"{s} is basically…\" and finish the sentence.",
-                                  "answer": "There is no wrong draft. The attempt is the warm-up."}
+        payload["interaction"] = {
+            "kind": "question",
+            "hint": f"Consider how conservation of state and feedback loops regulate {s} in {t}.",
+            "answer": f"It creates a self-limiting feedback cycle that prevents runaway instability and restores balance."
+        }
     if ctype == "joke":
-        payload["interaction"] = {"kind": "reveal", "reveal": "For the altitude of knowledge, obviously."}
+        payload["interaction"] = {"kind": "reveal", "reveal": "Because without it, the whole framework falls out of equilibrium!"}
     if ctype == "trivia":
-        payload["interaction"] = {"kind": "reveal", "reveal": "You already qualify. Keep going."}
+        payload["interaction"] = {
+            "kind": "reveal",
+            "reveal": f"The breakthrough happened when repeated experimental 'failures' occurred in the exact same anomaly zone."
+        }
     if ctype == "challenge":
         payload["interaction"] = {"kind": "challenge"}
     if ctype == "first_work_action":

@@ -126,9 +126,50 @@ def create_session(db: Session, user: User, task_id: str, duration: int,
                            seed=seed, real_pool=pool_dicts, pregen_payloads=pregen,
                            llm_picks=llm_picks)
     session.planned_items = len(plan)
+    real_by_id = {c.id: c for c in real_pool}
     for item in plan:
         if "existing_content_id" in item:   # real pool item already persisted w/ provenance
-            content_id = item["existing_content_id"]
+            orig = real_by_id.get(item["existing_content_id"])
+            llm_text = (pregen or {}).get(item["position"])
+            if orig and (orig.media or {}).get("url") and llm_text:
+                # Real image + LLM-generated captivating curiosity text (user rule)
+                content = Content(
+                    type=item["type"],
+                    title=llm_text.get("title") or orig.title,
+                    body=llm_text.get("body") or orig.body,
+                    language=task_obj.language,
+                    topic=task_obj.topic,
+                    subtopics=task_obj.subtopics,
+                    tags=orig.tags or [task_obj.topic.lower()],
+                    difficulty=task_obj.level or "beginner",
+                    tone="curious",
+                    humor_style=None,
+                    media=orig.media,
+                    interaction=llm_text.get("interaction") or orig.interaction,
+                    scores=orig.scores or {},
+                    status="active",
+                    generated_by=f"llm-{getattr(ai_base, 'last_used', None) or 'enhanced'}",
+                )
+                db.add(content)
+                db.flush()
+                orig_src = db.scalar(select(ContentSource).where(ContentSource.content_id == orig.id))
+                if orig_src:
+                    db.add(ContentSource(
+                        content_id=content.id,
+                        provider=orig_src.provider,
+                        source_id=orig_src.source_id,
+                        source_url=orig_src.source_url,
+                        creator=orig_src.creator,
+                        license=orig_src.license,
+                        license_url=orig_src.license_url,
+                        attribution_required=orig_src.attribution_required,
+                        attribution_text=orig_src.attribution_text,
+                        fetchable=orig_src.fetchable,
+                        fetched_at=orig_src.fetched_at,
+                    ))
+                content_id = content.id
+            else:
+                content_id = item["existing_content_id"]
         else:
             p = item["payload"]
             gen_src = p.pop("gen_source", "mock")      # which engine wrote this card
@@ -154,6 +195,24 @@ def create_session(db: Session, user: User, task_id: str, duration: int,
         db.add(SessionItem(session_id=session.id, content_id=content_id,
                            position=item["position"], phase=item["phase"],
                            planned_seconds=item["planned_seconds"]))
+    db.commit()
+    db.refresh(session)
+    return session
+
+
+def get_active_session(db: Session, user: User) -> SessionModel | None:
+    return db.scalar(select(SessionModel).where(
+        SessionModel.user_id == user.id, SessionModel.status == SESSION_ACTIVE))
+
+
+def resume_session(db: Session, session: SessionModel, remaining_seconds: int,
+                   cursor: int | None = None) -> SessionModel:
+    now = now_utc()
+    session.ends_at = now + timedelta(seconds=remaining_seconds)
+    if cursor is not None and 0 <= cursor < len(session.items):
+        it = next((i for i in session.items if i.position == cursor), None)
+        if it and it.shown_at is None:
+            it.shown_at = now
     db.commit()
     db.refresh(session)
     return session

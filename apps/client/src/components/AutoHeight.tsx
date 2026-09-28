@@ -34,8 +34,12 @@ export default function AutoHeight({
       measure();
     });
     observer.observe(el);
+    window.addEventListener("resize", measure);
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+    };
   }, [children]);
 
   return (

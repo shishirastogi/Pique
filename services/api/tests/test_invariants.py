@@ -173,3 +173,32 @@ def test_custom_lock_timing_and_minimum_one_hour(client, auth):
 
     client.post("/api/v1/lock/emergency-unlock", headers=auth, json={"confirm": "I NEED TO STOP"})
 
+
+def test_active_session_and_resume(client, auth):
+    # No active session initially
+    r0 = client.get("/api/v1/sessions/active", headers=auth)
+    assert r0.status_code == 200
+    assert r0.json() is None
+
+    # Create session
+    task_id = _mk_task(client, auth)
+    r1 = client.post("/api/v1/sessions", headers=auth,
+                     json={"task_id": task_id, "duration_minutes": 10})
+    assert r1.status_code == 201
+    sid = r1.json()["session_id"]
+
+    # Active session is returned
+    r2 = client.get("/api/v1/sessions/active", headers=auth)
+    assert r2.status_code == 200
+    assert r2.json()["session_id"] == sid
+
+    # Resume session with remaining seconds
+    r3 = client.post(f"/api/v1/sessions/{sid}/resume", headers=auth,
+                     json={"remaining_seconds": 450, "cursor": 2})
+    assert r3.status_code == 200
+    assert r3.json()["session_id"] == sid
+
+    client.post(f"/api/v1/sessions/{sid}/complete", headers=auth, json={})
+    client.post("/api/v1/lock/emergency-unlock", headers=auth, json={"confirm": "I NEED TO STOP"})
+
+

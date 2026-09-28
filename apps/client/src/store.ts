@@ -50,6 +50,44 @@ interface AppState {
   reportCurrent(reason: string, comment?: string): Promise<void>;
   emergencyUnlock(confirm: string): Promise<void>;
   pollLock(): Promise<void>;
+
+  pauseSession(remainingSeconds?: number): void;
+  resumeSession(): Promise<void>;
+  restoreSession(): Promise<boolean>;
+}
+
+const SESSION_STORAGE_KEY = "pique_active_session";
+
+interface StoredActiveSession {
+  sessionId: string;
+  cursor: number;
+  progress: Record<number, Progress>;
+  remainingSeconds: number;
+  pausedAt: number | null;
+  selectedDuration: Duration;
+  selectedLockMinutes: number;
+  updatedAt: number;
+}
+
+function saveActiveSession(stored: StoredActiveSession) {
+  try {
+    localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(stored));
+  } catch {}
+}
+
+function clearActiveSession() {
+  try {
+    localStorage.removeItem(SESSION_STORAGE_KEY);
+  } catch {}
+}
+
+function loadActiveSession(): StoredActiveSession | null {
+  try {
+    const raw = localStorage.getItem(SESSION_STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as StoredActiveSession) : null;
+  } catch {
+    return null;
+  }
 }
 
 let heartbeat: number | null = null;
@@ -66,7 +104,16 @@ export const useApp = createStore<AppState>()((set, get) => ({
     try {
       if (!getToken()) await api.auth(deviceFp());
       const lock = await api.lockStatus();
-      if (lock.locked) { set({ lock, screen: "locked", ready: true }); return; }
+      if (lock.locked) {
+        clearActiveSession();
+        set({ lock, screen: "locked", ready: true });
+        return;
+      }
+      const restored = await get().restoreSession();
+      if (restored) {
+        set({ ready: true });
+        return;
+      }
     } catch (e) {
       set({ error: e instanceof ApiError ? e.message : "Backend unreachable" });
     }
@@ -124,7 +171,12 @@ export const useApp = createStore<AppState>()((set, get) => ({
 
   setEngagement(i: number, e: Record<string, unknown>) {
     const p = get().progress;
-    set({ progress: { ...p, [i]: { ...(p[i] ?? { shownAt: Date.now(), skipped: false }), engagement: e } } });
+    const updated = { ...p, [i]: { ...(p[i] ?? { shownAt: Date.now(), skipped: false }), engagement: e } };
+    set({ progress: updated });
+    const stored = loadActiveSession();
+    if (stored) {
+      saveActiveSession({ ...stored, progress: updated, updatedAt: Date.now() });
+    }
   },
 
   nextCard() {
@@ -138,17 +190,24 @@ export const useApp = createStore<AppState>()((set, get) => ({
       }]).catch(() => undefined);
     }
     if (cursor + 1 < items.length) {
-      set({ cursor: cursor + 1 });
-      get().markShown(cursor + 1);
+      const nextIndex = cursor + 1;
+      set({ cursor: nextIndex });
+      get().markShown(nextIndex);
+      const stored = loadActiveSession();
+      if (stored) {
+        saveActiveSession({ ...stored, cursor: nextIndex, progress: get().progress, updatedAt: Date.now() });
+      }
     }
   },
 
   async endEarly() {
+    clearActiveSession();
     set({ sheet: "none", abandoned: true });
     await get().completeSession(null);
   },
 
   async completeSession(startedWork: boolean | null) {
+    clearActiveSession();
     const { session, selectedLockMinutes } = get();
     stopHeartbeat();
     if (!session) { set({ screen: "locked" }); return; }
@@ -183,6 +242,7 @@ export const useApp = createStore<AppState>()((set, get) => ({
   },
 
   async emergencyUnlock(confirm: string) {
+    clearActiveSession();
     await api.emergencyUnlock(confirm);
     set({ sheet: "none", lock: null, screen: "welcome" });
   },
@@ -193,6 +253,121 @@ export const useApp = createStore<AppState>()((set, get) => ({
       if (!lock.locked) set({ lock: null, screen: "welcome" });
       else set({ lock });
     } catch { /* keep local countdown */ }
+  },
+
+  pauseSession(remainingSeconds?: number) {
+    const { session, cursor, progress, selectedDuration, selectedLockMinutes } = get();
+    if (!session) return;
+    const endsAt = new Date(session.ends_at).getTime();
+    const rem = remainingSeconds ?? Math.max(1, Math.round((endsAt - Date.now()) / 1000));
+    saveActiveSession({
+      sessionId: session.session_id,
+      cursor,
+      progress,
+      remainingSeconds: rem,
+      pausedAt: Date.now(),
+      selectedDuration,
+      selectedLockMinutes,
+      updatedAt: Date.now(),
+    });
+  },
+
+  async resumeSession() {
+    const { session, cursor, selectedLockMinutes } = get();
+    if (!session) return;
+    const stored = loadActiveSession();
+    let rem = 0;
+    if (stored && stored.sessionId === session.session_id && stored.remainingSeconds > 0) {
+      rem = stored.remainingSeconds;
+    } else {
+      const endsAt = new Date(session.ends_at).getTime();
+      rem = Math.max(1, Math.round((endsAt - Date.now()) / 1000));
+    }
+
+    if (rem <= 0) return;
+
+    const newEndsAt = Date.now() + rem * 1000;
+    const updatedSession = { ...session, ends_at: new Date(newEndsAt).toISOString() };
+    set({ session: updatedSession });
+
+    saveActiveSession({
+      sessionId: session.session_id,
+      cursor,
+      progress: get().progress,
+      remainingSeconds: rem,
+      pausedAt: null,
+      selectedDuration: get().selectedDuration,
+      selectedLockMinutes,
+      updatedAt: Date.now(),
+    });
+
+    try {
+      await api.resumeSession(session.session_id, rem, cursor);
+    } catch {
+      // Offline fallback: local countdown continues cleanly
+    }
+  },
+
+  async restoreSession() {
+    const stored = loadActiveSession();
+    try {
+      let activeSession: SessionOut | null = null;
+      if (stored?.sessionId) {
+        try {
+          const s = await api.getSession(stored.sessionId);
+          if (s && s.status === "SESSION_ACTIVE") {
+            activeSession = s;
+          }
+        } catch {
+          // Fallback to active query
+        }
+      }
+
+      if (!activeSession) {
+        activeSession = await api.getActiveSession().catch(() => null);
+      }
+
+      if (!activeSession || activeSession.status !== "SESSION_ACTIVE") {
+        clearActiveSession();
+        return false;
+      }
+
+      const { items } = await api.sessionItems(activeSession.session_id);
+      if (!items || items.length === 0) {
+        clearActiveSession();
+        return false;
+      }
+
+      let rem = stored?.remainingSeconds;
+      if (!rem || rem <= 0) {
+        const serverRem = Math.round((new Date(activeSession.ends_at).getTime() - Date.now()) / 1000);
+        rem = serverRem > 0 ? serverRem : (activeSession.duration_minutes * 60);
+      }
+
+      const newEndsAt = Date.now() + rem * 1000;
+      const restoredSession = { ...activeSession, ends_at: new Date(newEndsAt).toISOString() };
+      const safeCursor = stored ? Math.min(stored.cursor, Math.max(0, items.length - 1)) : 0;
+
+      set({
+        session: restoredSession,
+        items,
+        cursor: safeCursor,
+        progress: stored?.progress || {},
+        selectedDuration: stored?.selectedDuration || (activeSession.duration_minutes as Duration) || 10,
+        selectedLockMinutes: stored?.selectedLockMinutes || 120,
+        busy: false,
+        screen: "session",
+      });
+
+      get().markShown(safeCursor);
+      startHeartbeat(get);
+
+      api.resumeSession(activeSession.session_id, rem, safeCursor).catch(() => undefined);
+      return true;
+    } catch {
+      clearActiveSession();
+      return false;
+    }
   },
 }));
 
@@ -207,6 +382,16 @@ async function startSessionWith(
     const session = await api.createSession(taskId, duration, lockMinutes);
     const { items } = await api.sessionItems(session.session_id);
     set({ session, items, cursor: 0, progress: {}, abandoned: false, busy: false, screen: "session" });
+    saveActiveSession({
+      sessionId: session.session_id,
+      cursor: 0,
+      progress: {},
+      remainingSeconds: duration * 60,
+      pausedAt: null,
+      selectedDuration: duration,
+      selectedLockMinutes: lockMinutes,
+      updatedAt: Date.now(),
+    });
     get().markShown(0);
     startHeartbeat(get);
   } catch (e) {

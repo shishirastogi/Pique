@@ -12,7 +12,22 @@ export default function LockScreen() {
   useEffect(() => {
     const poll = window.setInterval(() => void pollLock(), 30_000);   // server authority (docs/04 §5)
     const tick = window.setInterval(() => setLeft(Math.max(0, until - Date.now())), 1000);
-    return () => { clearInterval(poll); clearInterval(tick); };
+
+    const handleVisible = () => {
+      if (document.visibilityState === "visible") {
+        setLeft(Math.max(0, until - Date.now()));
+        void pollLock();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisible);
+    window.addEventListener("focus", handleVisible);
+
+    return () => {
+      clearInterval(poll);
+      clearInterval(tick);
+      document.removeEventListener("visibilitychange", handleVisible);
+      window.removeEventListener("focus", handleVisible);
+    };
   }, [until, pollLock]);
 
   const total = Math.floor(left / 1000);
