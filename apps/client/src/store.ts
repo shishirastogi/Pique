@@ -5,7 +5,15 @@ import { deviceFp } from "./lib/device";
 import type { ContentCard, Duration, LockStatus, SessionOut, TaskObject } from "./types";
 
 export type Screen = "welcome" | "how" | "details" | "session" | "locked";
-export type Sheet = "none" | "clarify" | "report" | "endEarly" | "emergency";
+export type Sheet = "none" | "clarify" | "report" | "endEarly";
+
+const ONBOARDED_KEY = "pique_onboarded";
+export function hasOnboarded(): boolean {
+  return typeof window !== "undefined" && localStorage.getItem(ONBOARDED_KEY) === "true";
+}
+export function setOnboarded(): void {
+  if (typeof window !== "undefined") localStorage.setItem(ONBOARDED_KEY, "true");
+}
 
 interface Progress { shownAt: number; skipped: boolean; engagement?: Record<string, unknown> }
 
@@ -44,11 +52,11 @@ interface AppState {
   markShown(i: number): void;
   setEngagement(i: number, e: Record<string, unknown>): void;
   nextCard(): void;
+  prevCard(): void;
   endEarly(): Promise<void>;
   completeSession(startedWork: boolean | null): Promise<void>;
 
   reportCurrent(reason: string, comment?: string): Promise<void>;
-  emergencyUnlock(confirm: string): Promise<void>;
   pollLock(): Promise<void>;
 
   pauseSession(remainingSeconds?: number): void;
@@ -93,7 +101,7 @@ function loadActiveSession(): StoredActiveSession | null {
 let heartbeat: number | null = null;
 
 export const useApp = createStore<AppState>()((set, get) => ({
-  ready: false, screen: "welcome", sheet: "none", toast: null, error: null,
+  ready: false, screen: hasOnboarded() ? "details" : "welcome", sheet: "none", toast: null, error: null,
   taskId: null, task: null, clarifyOptions: null, clarifyQuestion: null, busy: false,
   selectedDuration: 10,
   selectedLockMinutes: 120,
@@ -117,7 +125,8 @@ export const useApp = createStore<AppState>()((set, get) => ({
     } catch (e) {
       set({ error: e instanceof ApiError ? e.message : "Backend unreachable" });
     }
-    set({ ready: true });
+    const initialScreen: Screen = hasOnboarded() ? "details" : "welcome";
+    set({ screen: initialScreen, ready: true });
   },
 
   setScreen: (screen: Screen) => set({ screen }),
@@ -200,6 +209,19 @@ export const useApp = createStore<AppState>()((set, get) => ({
     }
   },
 
+  prevCard() {
+    const { cursor } = get();
+    if (cursor > 0) {
+      const prevIndex = cursor - 1;
+      set({ cursor: prevIndex });
+      get().markShown(prevIndex);
+      const stored = loadActiveSession();
+      if (stored) {
+        saveActiveSession({ ...stored, cursor: prevIndex, progress: get().progress, updatedAt: Date.now() });
+      }
+    }
+  },
+
   async endEarly() {
     clearActiveSession();
     set({ sheet: "none", abandoned: true });
@@ -241,16 +263,10 @@ export const useApp = createStore<AppState>()((set, get) => ({
     get().setToast("Reported — thanks for flagging it.");
   },
 
-  async emergencyUnlock(confirm: string) {
-    clearActiveSession();
-    await api.emergencyUnlock(confirm);
-    set({ sheet: "none", lock: null, screen: "welcome" });
-  },
-
   async pollLock() {
     try {
       const lock = await api.lockStatus();
-      if (!lock.locked) set({ lock: null, screen: "welcome" });
+      if (!lock.locked) set({ lock: null, screen: hasOnboarded() ? "details" : "welcome" });
       else set({ lock });
     } catch { /* keep local countdown */ }
   },

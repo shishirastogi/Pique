@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import type { Screen } from "../store";
+import { hasOnboarded, setOnboarded, type Screen } from "../store";
 import Welcome from "../screens/Welcome";
 import HowItWorks from "../screens/HowItWorks";
 import FillDetails from "../screens/FillDetails";
@@ -61,9 +61,22 @@ export default function ScreenNavigator({
       case "welcome":
         return <Welcome onStart={() => onSetScreen("how")} />;
       case "how":
-        return <HowItWorks onBegin={() => onSetScreen("details")} />;
+        return (
+          <HowItWorks
+            onBegin={() => {
+              setOnboarded();
+              onSetScreen("details");
+            }}
+          />
+        );
       case "details":
-        return <FillDetails onBack={() => onSetScreen("how")} />;
+        return (
+          <FillDetails
+            onBack={() => {
+              if (!hasOnboarded()) onSetScreen("how");
+            }}
+          />
+        );
       case "session":
         return <Session />;
       case "locked":

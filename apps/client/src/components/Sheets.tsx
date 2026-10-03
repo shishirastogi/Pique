@@ -99,35 +99,3 @@ export function EndEarlySheet() {
     </Sheet>
   );
 }
-
-export function EmergencySheet() {
-  const { sheet, setSheet, emergencyUnlock } = useApp();
-  const [text, setText] = useState("");
-  const [err, setErr] = useState<string | null>(null);
-  if (sheet !== "emergency") return null;
-  const ok = text === "I NEED TO STOP";
-  return (
-    <Sheet onClose={() => setSheet("none")}>
-      <h3 className="text-[19px] font-bold">Emergency unlock</h3>
-      <p className="mt-2 text-[13.5px] leading-relaxed text-[color:var(--muted-foreground)]">
-        This breaks your commitment and is logged. Type{" "}
-        <code className="rounded bg-[color:var(--surface-2)] px-1.5 py-0.5 text-[12px]">I NEED TO STOP</code>{" "}
-        to unlock now.
-      </p>
-      <input
-        value={text} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setText(e.target.value)} placeholder="I NEED TO STOP"
-        className="mt-4 w-full rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-3 text-[14px] tracking-wide focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring)]"
-      />
-      {err && <p className="mt-2 text-[12.5px] font-medium text-red-400">{err}</p>}
-      <div className="mt-5 flex justify-end gap-3">
-        <PillButton variant="ghost" onClick={() => setSheet("none")}>Cancel</PillButton>
-        <PillButton
-          variant="solid" disabled={!ok}
-          onClick={() => emergencyUnlock(text).catch((e) => setErr(e.message))}
-        >
-          Unlock
-        </PillButton>
-      </div>
-    </Sheet>
-  );
-}

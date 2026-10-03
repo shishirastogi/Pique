@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Chip, Toggle } from "../components/ui";
 import ThemeToggle from "../components/ThemeToggle";
 import { ArrowRight, ChevronLeft, Minus, Plus } from "../components/icons";
-import { useApp } from "../store";
+import { useApp, hasOnboarded } from "../store";
 import type { Duration } from "../types";
 
 const CATEGORIES = ["Work", "Study", "Project", "Other"];
@@ -46,14 +46,23 @@ export default function FillDetails({ onBack }: { onBack: () => void }) {
   return (
     <div className="flex h-full w-full flex-col overflow-y-auto scene-scroll bg-[color:var(--background)] px-7 pb-9 pt-14 text-[color:var(--foreground)] transition-colors duration-500">
       {/* header */}
-      <div className="flex items-start justify-between">
-        <button
-          onClick={onBack}
-          aria-label="Go back"
-          className="btn-pressable -ml-2 flex size-9 items-center justify-center rounded-full text-[color:var(--muted-foreground)] transition-colors hover:bg-[color:var(--surface-2)]"
-        >
-          <ChevronLeft className="size-5 transition-transform group-hover:-translate-x-0.5" />
-        </button>
+      <div className="flex items-center justify-between">
+        {!hasOnboarded() ? (
+          <button
+            onClick={onBack}
+            aria-label="Go back"
+            className="btn-pressable -ml-2 flex size-9 items-center justify-center rounded-full text-[color:var(--muted-foreground)] transition-colors hover:bg-[color:var(--surface-2)]"
+          >
+            <ChevronLeft className="size-5 transition-transform group-hover:-translate-x-0.5" />
+          </button>
+        ) : (
+          <span
+            className="text-[20px] font-extrabold tracking-tight text-[color:var(--brand)]"
+            style={{ fontFamily: '"Geist:ExtraBold", sans-serif' }}
+          >
+            Pique
+          </span>
+        )}
         <ThemeToggle />
       </div>
 

@@ -8,7 +8,7 @@ import { useApp } from "../store";
 
 export default function Session() {
   const {
-    session, items, cursor, nextCard, setSheet, setEngagement,
+    session, items, cursor, nextCard, prevCard, setSheet, setEngagement,
     markShown, completeSession, pauseSession, resumeSession, progress,
   } = useApp();
   const card = items[cursor];
@@ -21,6 +21,7 @@ export default function Session() {
 
   const [cardDirection, setCardDirection] = useState<"next" | "prev">("next");
   const prevCursorRef = useRef(cursor);
+  const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
 
   useEffect(() => {
     setLeft(Math.max(0, endsAt - Date.now()));
@@ -96,8 +97,47 @@ export default function Session() {
     nextCard();
   };
 
+  const handlePrev = () => {
+    if (cursor > 0) {
+      setCardDirection("prev");
+      prevCard();
+    }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    touchStartRef.current = { x: t.clientX, y: t.clientY, time: Date.now() };
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - touchStartRef.current.x;
+    const dy = t.clientY - touchStartRef.current.y;
+    const dt = Date.now() - touchStartRef.current.time;
+    touchStartRef.current = null;
+
+    // Detect horizontal swipe (at least 35px, more horizontal than vertical, under 600ms)
+    if (Math.abs(dx) > 35 && Math.abs(dx) > Math.abs(dy) * 1.2 && dt < 600) {
+      if (dx < 0 && !isLast) {
+        handleNext();
+      } else if (dx > 0 && cursor > 0) {
+        handlePrev();
+      }
+    }
+  };
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight" && !isLast) handleNext();
+      else if (e.key === "ArrowLeft" && cursor > 0) handlePrev();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  });
+
   return (
-    <div className="flex h-full w-full flex-col overflow-y-auto scene-scroll bg-[color:var(--background)] px-7 pb-8 pt-14 text-[color:var(--foreground)] transition-colors duration-500">
+    <div className="flex h-full w-full flex-col overflow-y-auto scene-scroll overscroll-contain bg-[color:var(--background)] px-6 pb-8 pt-10 text-[color:var(--foreground)] transition-colors duration-500">
       {/* header */}
       <div className="flex items-center justify-between">
         <button
@@ -161,8 +201,12 @@ export default function Session() {
         </button>
       </div>
 
-      {/* content card with auto-adjusting height and sliding animations */}
-      <div className="mt-4 flex-1 flex flex-col justify-center min-h-0">
+      {/* content card with auto-adjusting height, swipe gestures and sliding animations */}
+      <div
+        className="my-auto py-2 w-full flex flex-col min-h-fit touch-pan-y"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         {card ? (
           <AutoHeight duration={360} className="w-full">
             <div
@@ -187,7 +231,7 @@ export default function Session() {
         )}
       </div>
 
-      {/* footer: report + skip/next */}
+      {/* footer: report + prev/skip/next */}
       <div className="mt-4 flex items-center justify-between">
         <button
           onClick={() => setSheet("report")}
@@ -195,9 +239,14 @@ export default function Session() {
         >
           <Flag className="size-3.5" /> Report
         </button>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          {cursor > 0 && (
+            <Chip onClick={handlePrev} className="btn-pressable text-xs px-3 py-1.5">
+              Prev
+            </Chip>
+          )}
           {!isLast && (
-            <Chip onClick={handleNext} className="btn-pressable">
+            <Chip onClick={handleNext} className="btn-pressable text-xs px-3 py-1.5">
               Skip
             </Chip>
           )}

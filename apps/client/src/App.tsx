@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { ThemeProvider } from "./lib/theme";
 import { AppFrame } from "./components/ui";
 import ScreenNavigator from "./components/ScreenNavigator";
-import { ClarifySheet, EmergencySheet, EndEarlySheet, ReportSheet } from "./components/Sheets";
+import { ClarifySheet, EndEarlySheet, ReportSheet } from "./components/Sheets";
 import { useApp } from "./store";
 
 export default function App() {
@@ -24,7 +24,6 @@ export default function App() {
         <ClarifySheet />
         <ReportSheet />
         <EndEarlySheet />
-        <EmergencySheet />
 
         {toast && (
           <div className="absolute bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full bg-[#0b2719] px-4 py-2 text-[13px] font-medium text-[#adfff4] shadow-lg ring-1 ring-[#27ffa1]/30">

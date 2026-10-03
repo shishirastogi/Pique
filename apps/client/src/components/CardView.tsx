@@ -63,7 +63,7 @@ export default function CardView({
           <img
             src={img}
             alt={card.title ?? card.type}
-            className="w-full h-auto max-h-[500px] object-contain block transition-transform duration-500 ease-out hover:scale-[1.01]"
+            className="w-full h-auto max-h-[220px] sm:max-h-[280px] object-contain block transition-transform duration-500 ease-out hover:scale-[1.01]"
             referrerPolicy="no-referrer"
             loading="eager"
           />

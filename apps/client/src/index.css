@@ -97,6 +97,13 @@ body {
 * { scrollbar-width: none; }
 *::-webkit-scrollbar { width: 0; height: 0; }
 
+.scene-scroll {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
+}
+
 /* ------------------------------------------------------------------ */
 /* Motion system — screen push/pop, card swap, staggered content rise */
 /* ------------------------------------------------------------------ */

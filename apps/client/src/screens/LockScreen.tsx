@@ -5,7 +5,7 @@ import SceneBackground from "../components/SceneBackground";
 import { useApp } from "../store";
 
 export default function LockScreen() {
-  const { lock, pollLock, setSheet } = useApp();
+  const { lock, pollLock } = useApp();
   const until = lock?.lock_until ? new Date(lock.lock_until).getTime() : Date.now();
   const [left, setLeft] = useState(Math.max(0, until - Date.now()));
 
@@ -83,14 +83,8 @@ export default function LockScreen() {
         </div>
       </div>
 
-      <div className="relative z-10 flex flex-col items-center gap-3 text-center">
-        <p className="text-[11px] text-[#6f9c85]">Countdown hits zero → back to the welcome screen.</p>
-        <button
-          onClick={() => setSheet("emergency")}
-          className="btn-pressable text-[12px] font-medium text-[#547864] underline decoration-[#547864]/45 underline-offset-4 transition-colors hover:text-[#eafff4]"
-        >
-          Emergency unlock
-        </button>
+      <div className="relative z-10 flex flex-col items-center text-center">
+        <p className="text-[12px] text-[#6f9c85]">Countdown hits zero → ready for your next focus session.</p>
       </div>
     </main>
   );
