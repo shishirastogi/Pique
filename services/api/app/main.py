@@ -36,6 +36,10 @@ def create_app() -> FastAPI:
                                 "message": "Server error — check the API console for the stack trace.",
                                 "details": None}})
 
+    @app.get("/")
+    def root():
+        return {"ok": True, "message": "FocusWarmup API"}
+
     @app.get("/healthz")
     def healthz():
         return {"ok": True}

@@ -6,7 +6,14 @@ small env-driven set; defaults work with zero setup (sqlite file DB).
 from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-_REPO_ROOT = Path(__file__).resolve().parents[4]
+def _find_repo_root(start: Path) -> Path:
+    for parent in (start, *start.parents):
+        if (parent / "infra").is_dir() or (parent / ".git").is_dir():
+            return parent
+    return start.parents[2] if len(start.parents) > 2 else start.parent
+
+
+_REPO_ROOT = _find_repo_root(Path(__file__).resolve())
 _ENV_FILES = (
     str(_REPO_ROOT / "infra" / ".env"),
     str(_REPO_ROOT / ".env"),

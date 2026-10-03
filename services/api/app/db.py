@@ -8,12 +8,18 @@ from sqlalchemy.orm import sessionmaker
 
 from app.core.config import settings
 
-if settings.database_url.startswith("sqlite"):
+_db_url = settings.database_url
+if _db_url.startswith("postgres://"):
+    _db_url = _db_url.replace("postgres://", "postgresql+psycopg://", 1)
+elif _db_url.startswith("postgresql://") and not _db_url.startswith("postgresql+"):
+    _db_url = _db_url.replace("postgresql://", "postgresql+psycopg://", 1)
+
+if _db_url.startswith("sqlite"):
     os.makedirs("data", exist_ok=True)
 
 engine = create_engine(
-    settings.database_url,
-    connect_args={"check_same_thread": False} if settings.database_url.startswith("sqlite") else {},
+    _db_url,
+    connect_args={"check_same_thread": False} if _db_url.startswith("sqlite") else {},
 )
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
