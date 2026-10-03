@@ -88,20 +88,20 @@ When the countdown ends, Pique **locks itself** for a set period so your attenti
 
 <div align="center">
 
-| Welcome | How it works | Fill the details |
+| Welcome | How it works | Fill Details |
 |:---:|:---:|:---:|
 | <img src="docs/assets/01-welcome.png" width="230" /> | <img src="docs/assets/02-how-it-works.png" width="230" /> | <img src="docs/assets/03-fill-details.png" width="230" /> |
-| *First launch only* | *First launch only* | *Topic, warm-up time, lockout* |
+| *First launch only — intro & premise* | *First launch onboarding steps* | *Topic input, warm-up length & lockout* |
 
-| Session card | Next card | Interaction |
+| Warm-up card | Controls & navigation | Attribution & provenance |
 |:---:|:---:|:---:|
 | <img src="docs/assets/04-session-card.png" width="230" /> | <img src="docs/assets/05-session-card-2.png" width="230" /> | <img src="docs/assets/06-card-interaction.png" width="230" /> |
-| *Countdown + progress* | *Swipe or tap Next* | *Reveal, polls, challenges* |
+| *Meme warm-up with live countdown & progress* | *Animated GIF with Prev, Skip & Next controls* | *Visual explanation with licensed Wikimedia attribution* |
 
-| Locked |
+| Focus Lockout |
 |:---:|
 | <img src="docs/assets/07-locked.png" width="230" /> |
-| *Session complete, app locked until the timer ends* |
+| *Session complete — locked until timer ends (no distractions)* |
 
 </div>
 
